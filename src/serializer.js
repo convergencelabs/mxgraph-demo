@@ -17,13 +17,16 @@ class MxGraphSerializer {
    * @param {mxGraphModel} model
    */
   static modelToJson(model) {
-    const cells = [];
+    const cells = {};
     Object.keys(model.cells).forEach(cellId => {
       const cell = model.cells[cellId];
-      cells.push(MxGraphSerializer.cellToJson(cell));
+      cells[cellId] = MxGraphSerializer.cellToJson(cell);
     });
 
+    const root = model.root.id;
+
     const result = {
+      root,
       cells
     };
 
@@ -102,7 +105,7 @@ class MxGraphSerializer {
       };
 
       if (geometry.points) {
-        result.points = points.map(p => MxGraphSerializer.pointToJson(p));
+        result.points = geometry.points.map(p => MxGraphSerializer.pointToJson(p));
       }
 
       if (geometry.sourcePoint) {
@@ -157,7 +160,7 @@ class MxGraphSerializer {
         if (s.includes("=")) {
           const [key, value] = s.split("=");
           result.styles[key] = value;
-        } else {
+        } else if (s.trim().length > 0) {
           result.classes.push(s);
         }
       });
@@ -176,13 +179,15 @@ class MxGraphSerializer {
   //
 
   static jsonToMxGraphModel(json) {
-    const cells = json.cells.slice(0);
-    const rootJson = cells.shift();
+    const cells = {...json.cells};
+    const rootJson = cells[json.root];
+    delete cells[json.root];
 
-    const rootCell = MxGraphSerializer.jsonToMxCell(rootJson, undefined);
+    const rootCell = MxGraphSerializer.jsonToMxCell(json.root, rootJson, undefined);
     const model = new mxGraphModel(rootCell);
-    cells.forEach(cellJson => {
-      const cell = MxGraphSerializer.jsonToMxCell(cellJson, model);
+    Object.keys(cells).forEach(cellId => {
+      const cellJson = cells[cellId];
+      const cell = MxGraphSerializer.jsonToMxCell(cellId, cellJson, model);
       model.cellAdded(cell);
     });
 
@@ -194,12 +199,13 @@ class MxGraphSerializer {
    * @param json
    * @param {mxGraphModel} model
    */
-  static jsonToMxCell(json, model) {
+  static jsonToMxCell(id,json, model) {
     const value = MxGraphSerializer.jsonToValue(json.value);
     const style = MxGraphSerializer.jsonToStyle(json.style);
     const geometry = MxGraphSerializer.jsonToGeometry(json.geometry);
 
     const cell = new mxCell(value, geometry, style);
+    cell.setId(id);
 
     if (json.parent) {
       const parent = model.getCell(json.parent);
@@ -236,6 +242,10 @@ class MxGraphSerializer {
       cell.setEdge(true);
     }
 
+    if (json.style !== undefined) {
+      cell.setStyle(MxGraphSerializer.jsonToStyle(json.style));
+    }
+
     return cell;
   }
 
@@ -256,7 +266,7 @@ class MxGraphSerializer {
 
     Object.keys(jsonStyle.styles).forEach(key => {
       const value = jsonStyle.styles[key];
-      style += key + "=" + value;
+      style += key + "=" + value + ";";
     });
 
     return style;

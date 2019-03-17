@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "mxgraph": "^3.9.11"
+    "mxgraph": "^3.9.11",
+    "@convergence/convergence": "1.0.0-beta.9"
   }
 }

@@ -61,6 +61,9 @@
 
 	<script type="text/javascript" src="../../src/serializer.js"></script>
 	<script type="text/javascript" src="../../src/graphData.js"></script>
+	<script type="text/javascript" src="../../src/bindings.js"></script>
+	<script type="text/javascript" src="../../node_modules/rxjs/bundles/rxjs.umd.min.js"></script>
+	<script type="text/javascript" src="../../node_modules/@convergence/convergence/convergence.global.js"></script>
 </head>
 <body class="geEditor">
 	<script type="text/javascript">
@@ -105,17 +108,31 @@
 				var themes = new Object();
 				themes[Graph.prototype.defaultThemeName] = xhr[1].getDocumentElement(); 
 
-				const model = MxGraphSerializer.jsonToMxGraphModel(JSON_GRAPH);
+				Convergence
+					.connectAnonymously("http://localhost:8080/convergence/default")
+					.then(domain => {
+					  return domain.models().openAutoCreate({
+							id: "test",
+							collection: "mxgraph",
+							ephemeral: false,
+							data: JSON_GRAPH
+						});
+					})
+					.then(graphModel => {
+            const model = MxGraphSerializer.jsonToMxGraphModel(graphModel.root().value());
 
-				// Main
-			    const editor = new Editor(urlParams['chrome'] == '0', themes, model)
-
-				const ui = new EditorUi(editor);
-				setTimeout(() => {
-                  editor.graph.view.refresh();
-				}, 0);
 
 
+            // Main
+            const editor = new Editor(urlParams['chrome'] == '0', themes, model);
+
+            const adapter = new MxGraphBinder(editor.graph, graphModel.root());
+
+            const ui = new EditorUi(editor);
+            setTimeout(() => {
+              editor.graph.view.refresh();
+            }, 0);
+					});
 			}, function()
 			{
 				document.body.innerHTML = '<center style="margin-top:10%;">Error loading resource files. Please check browser console.</center>';
