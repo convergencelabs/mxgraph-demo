@@ -5,12 +5,34 @@ const padding = 8;
 class MxGraphActivityBinder {
 
 
-  constructor(mxGraph, activity) {
+  constructor(mxGraph, activity, modelAdapter) {
     this._mxGraph = mxGraph;
     this._activity = activity;
 
+    modelAdapter.addListener({
+      onCellsRemoved: (evt) => {
+        evt.cells.forEach(cell => {
+          this._cellRemoved(cell);
+        });
+      },
+      onCellGeometryChanged: (evt) => this._cellUpdated(evt.cell),
+      onCellStyleChanged: (evt) => this._cellUpdated(evt.cell)
+    });
+
+    this._mxGraph.model.addListener(mxEvent.CHANGE, (sender, evt) => {
+      const edit = evt.getProperty('edit');
+      if (!edit.ignoreEdit) {
+        edit.changes.forEach(change => {
+          if (change instanceof mxGeometryChange) {
+            this._cellUpdated(change.cell);
+          } else if (change instanceof mxStyleChange) {
+            this._cellUpdated(change.cell);
+          }
+        });
+      }
+    });
+
     this._remotePointers = {};
-    this._remoteSelectionsRectsByCell = {};
     this._remoteSelectionsBySessionId = {};
 
     this._svg = mxGraph.view.drawPane.ownerSVGElement;
@@ -81,25 +103,51 @@ class MxGraphActivityBinder {
     }
   }
 
+  _cellUpdated(cell) {
+    Object.keys(this._remoteSelectionsBySessionId).forEach(sessionId => {
+      const remoteSelection = this._remoteSelectionsBySessionId[sessionId];
+      const cellSelection = remoteSelection.cells[cell.id];
+      if (cellSelection) {
+        this._updateBoundsForRect(cell, cellSelection);
+      }
+    });
+  }
+
+  _cellRemoved(cell) {
+    Object.keys(this._remoteSelectionsBySessionId).forEach(sessionId => {
+      const remoteSelection = this._remoteSelectionsBySessionId[sessionId];
+      const cellSelection = remoteSelection.cells[cell.id];
+      if (cellSelection) {
+        cellSelection.parentElement.removeChild(cellSelection);
+        delete remoteSelection.cells[cell.id];
+      }
+    });
+  }
+
   _updateRemoteSelection(sessionId, cellIds) {
     const currentSelection = this._remoteSelectionsBySessionId[sessionId];
     if (currentSelection) {
-      currentSelection.parentElement.removeChild(currentSelection);
+      currentSelection.group.parentElement.removeChild(currentSelection.group);
       delete this._remoteSelectionsBySessionId[sessionId];
     }
 
     if (cellIds && cellIds.length > 0) {
+      const selection = {
+        cells: {}
+      };
       const selectionGroup = document.createElementNS(svgNS, "g");
       cellIds.forEach(cellId => {
         const cell = this._mxGraph.model.getCell(cellId);
         if (cell !== null) {
           const cellRect = this._createSelectionRect(cell);
           selectionGroup.appendChild(cellRect);
+          selection.cells[cellId] = cellRect;
         }
       });
 
-      this._remoteSelectionsBySessionId[sessionId] = selectionGroup;
+      selection.group = selectionGroup;
 
+      this._remoteSelectionsBySessionId[sessionId] = selection;
       this._svg.appendChild(selectionGroup);
     }
   }
@@ -110,7 +158,13 @@ class MxGraphActivityBinder {
     selection.setAttributeNS(null, "stroke", "#ff1712");
     selection.setAttributeNS(null, "stroke-dasharray", "3 3");
     selection.setAttributeNS(null, "pointer-events", "3 3");
-    
+
+    this._updateBoundsForRect(cell, selection);
+
+    return selection;
+  }
+
+  _updateBoundsForRect(cell, selection) {
     const bounds = this._mxGraph.getBoundingBox([cell]);
     const {x, y, height, width} = bounds;
 
@@ -118,7 +172,5 @@ class MxGraphActivityBinder {
     selection.setAttributeNS(null, "y", `${y - (padding / 2)}`);
     selection.setAttributeNS(null, "height", `${height + padding}`);
     selection.setAttributeNS(null, "width", `${width + padding}`);
-
-    return selection;
   }
 }

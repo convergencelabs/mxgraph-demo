@@ -3,6 +3,8 @@ class MxGraphModelBinder {
   constructor(mxGraph, rtGraph) {
     this._mxGraph = mxGraph;
 
+    this._listeners = [];
+
     this._mxGraph.addListener(mxEvent.CELLS_ADDED, (sender, evt) => {
       const {name, properties} = evt;
       const cells = properties.cells;
@@ -10,7 +12,7 @@ class MxGraphModelBinder {
       cells.forEach(cell => {
         const cellJson = MxGraphSerializer.cellToJson(cell);
         const rtCell = this._rtCells.set(cell.id, cellJson);
-        CellAdapter.bind(cell, rtCell, this._mxGraph);
+        CellAdapter.bind(cell, rtCell, this._mxGraph, this._fireEvent.bind(this));
       });
     });
 
@@ -22,17 +24,14 @@ class MxGraphModelBinder {
         const cellId = cell.getId();
         this._rtCells.remove(cellId);
       });
+
+      this._fireEvent("onCellsRemoved", {cells});
     });
 
     this._mxGraph.model.addListener(mxEvent.CHANGE, (sender, evt) => {
       const edit = evt.getProperty('edit');
-      const editable = true;
-      if (!this.ignoreChange && editable && !edit.ignoreEdit) {
-        const changes = edit.changes;
-
-        for (let i = 0; i < changes.length; i++) {
-          this.processChange(changes[i]);
-        }
+      if (!edit.ignoreEdit) {
+        edit.changes.forEach(change => this.processChange(change))
       }
     });
 
@@ -43,7 +42,7 @@ class MxGraphModelBinder {
       const cell = MxGraphSerializer.jsonToMxCell(cellId, cellJson, this._mxGraph.model);
       this._mxGraph.model.cellAdded(cell);
       this._mxGraph.view.refresh();
-      CellAdapter.bind(cell, e.value, this._mxGraph);
+      CellAdapter.bind(cell, e.value, this._mxGraph, this._fireEvent.bind(this));
     });
 
     this._rtCells.on("remove", e => {
@@ -51,13 +50,18 @@ class MxGraphModelBinder {
       const cell = this._mxGraph.model.cells[cellId];
       this._mxGraph.model.remove(cell);
       this._mxGraph.view.refresh();
+      this._fireEvent("onCellsRemoved", {cells: [cell]});
     });
 
     Object.keys(this._mxGraph.model.cells).forEach(id => {
       const cell = this._mxGraph.model.cells[id];
       const rtCell = this._rtCells.get(id);
-      CellAdapter.bind(cell, rtCell, this._mxGraph);
+      CellAdapter.bind(cell, rtCell, this._mxGraph, this._fireEvent.bind(this));
     })
+  }
+
+  addListener(listener) {
+    this._listeners.push(listener);
   }
 
   processChange(change) {
@@ -79,18 +83,31 @@ class MxGraphModelBinder {
   processLocalChildChange(change) {
     console.log("cell child changed", change);
   }
+
+  _fireEvent(name, evt) {
+    this._listeners.forEach(listener => {
+      try {
+        const callback = listener[name];
+        if (callback) {
+          callback(evt);
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    })
+  }
 }
 
 class CellAdapter {
-  static bind(mxCell, rtCell, graph) {
-    const adapter = new CellAdapter(mxCell, rtCell, graph);
+  static bind(mxCell, rtCell, graph, eventEmitter) {
+    const adapter = new CellAdapter(mxCell, rtCell, graph, eventEmitter);
     mxCell.__convergenceAdapter = adapter;
   }
 
-  constructor(mxCell, rtCell, graph) {
+  constructor(mxCell, rtCell, graph, eventEmitter) {
     this._mxCell = mxCell;
     this._rtCell = rtCell;
-
+    this._fireEvent = eventEmitter;
     this._mxGraph = graph;
 
     this.initCell();
@@ -101,7 +118,6 @@ class CellAdapter {
   processChange(change) {
     if (change instanceof mxTerminalChange) {
       this.localTerminalChanged(change);
-
     } else if (change instanceof mxGeometryChange) {
       this.localGeometryChanged(change)
     } else if (change instanceof mxStyleChange) {
@@ -119,6 +135,7 @@ class CellAdapter {
     const {geometry} = change;
     const geometryJson = MxGraphSerializer.geometryToJson(geometry);
     this._rtGeometry.value(geometryJson);
+    this._fireEvent("onCellGeometryChanged", {cell: this._mxCell});
   }
 
   localValueChanged(change) {
@@ -149,6 +166,8 @@ class CellAdapter {
       const diff = this.diffStyles(newStyle, oldStyle);
       this.applyStyleChnages(diff);
     }
+
+    this._fireEvent("onCellStyleChanged", {cell: this._mxCell});
   }
 
   diffStyles(newStyles, oldStyles) {
@@ -237,6 +256,7 @@ class CellAdapter {
         const mxGeometry = MxGraphSerializer.jsonToGeometry(this._rtGeometry.value());
         this._mxCell.setGeometry(mxGeometry);
         this._mxGraph.view.refresh();
+        this._fireEvent("onCellGeometryChanged", {cell: this._mxCell});
       });
     }
   }
@@ -255,7 +275,7 @@ class CellAdapter {
         this._mxCell.setStyle(newStyle);
         this._mxGraph.view.removeState(this._mxCell);
         this._mxGraph.view.refresh();
-
+        this._fireEvent("onCellStyleChanged", {cell: this._mxCell});
       });
 
       this._rtStyles.on("remove", e => {
@@ -264,10 +284,9 @@ class CellAdapter {
         delete currentStyle.styles[styleName];
         const newStyle = MxGraphSerializer.jsonToStyle(currentStyle);
         this._mxCell.setStyle(newStyle);
-        const old = mxGraphView.prototype.updateStyle;
-        mxGraphView.prototype.updateStyle = true;
+        this._mxGraph.view.removeState(this._mxCell);
         this._mxGraph.view.refresh();
-        mxGraphView.prototype.updateStyle = old;
+        this._fireEvent("onCellStyleChanged", {cell: this._mxCell});
       });
 
 
@@ -280,6 +299,7 @@ class CellAdapter {
         this._mxCell.setStyle(newStyle);
         this._mxGraph.view.removeState(this._mxCell);
         this._mxGraph.view.refresh();
+        this._fireEvent("onCellStyleChanged", {cell: this._mxCell});
       });
 
       this._rtClasses.on("remove", e => {
@@ -291,6 +311,7 @@ class CellAdapter {
         this._mxCell.setStyle(newStyle);
         this._mxGraph.view.removeState(this._mxCell);
         this._mxGraph.view.refresh();
+        this._fireEvent("onCellStyleChanged", {cell: this._mxCell});
       });
     }
   }

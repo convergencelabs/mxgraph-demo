@@ -134,7 +134,7 @@
             }, 0);
 
             const modelAdapter = new MxGraphModelBinder(editor.graph, graphModel.root());
-            const activityAdapter = new MxGraphActivityBinder(editor.graph, activity);
+            const activityAdapter = new MxGraphActivityBinder(editor.graph, activity, modelAdapter);
 
           });
 			}, function()
