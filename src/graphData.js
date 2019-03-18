@@ -11,13 +11,15 @@ const JSON_GRAPH = {
       "value": "Hello,",
       "geometry": {"type": "g", "x": 20, "y": 20, "width": 80, "height": 30, "relative": false, "offset": null},
       "vertex": true,
-      "parent": "1"
+      "parent": "1",
+      "style": {classes: [], styles: {}}
     },
     "3": {
       "value": "World!",
       "geometry": {"type": "g", "x": 200, "y": 150, "width": 80, "height": 30, "relative": false, "offset": null},
       "vertex": true,
-      "parent": "1"
+      "parent": "1",
+      "style": {classes: [], styles: {}}
     },
     "4": {
       "value": "",
@@ -25,7 +27,8 @@ const JSON_GRAPH = {
       "edge": true,
       "parent": "1",
       "source": "2",
-      "target": "3"
+      "target": "3",
+      "style": {classes: [], styles: {}}
     }
   }
 };

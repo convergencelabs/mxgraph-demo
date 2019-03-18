@@ -1,7 +1,28 @@
-class MxGraphBinder {
+class MxGraphModelBinder {
 
   constructor(mxGraph, rtGraph) {
     this._mxGraph = mxGraph;
+
+    this._mxGraph.addListener(mxEvent.CELLS_ADDED, (sender, evt) => {
+      const {name, properties} = evt;
+      const cells = properties.cells;
+
+      cells.forEach(cell => {
+        const cellJson = MxGraphSerializer.cellToJson(cell);
+        const rtCell = this._rtCells.set(cell.id, cellJson);
+        CellAdapter.bind(cell, rtCell, this._mxGraph);
+      });
+    });
+
+    this._mxGraph.addListener(mxEvent.CELLS_REMOVED, (sender, evt) => {
+      const {name, properties} = evt;
+      const cells = properties.cells;
+
+      cells.forEach(cell => {
+        const cellId = cell.getId();
+        this._rtCells.remove(cellId);
+      });
+    });
 
     this._mxGraph.model.addListener(mxEvent.CHANGE, (sender, evt) => {
       const edit = evt.getProperty('edit');
@@ -40,8 +61,9 @@ class MxGraphBinder {
   }
 
   processChange(change) {
-    console.log('processChange: ', change);
+
     if (change instanceof mxRootChange) {
+      console.log('mxRootChange: ', change);
       // Only process the root change that sets the current root
       // ie. ignore previous root changes
       if (change.root === this.model.root) {
@@ -50,23 +72,12 @@ class MxGraphBinder {
     } else if (change instanceof mxChildChange) {
       this.processLocalChildChange(change);
     } else if (change.cell != null && change.cell.id != null) {
-      if (!change.cell.__convergenceAdapter) {
-        // this is a new cell.  Add it.
-        const cellJson = MxGraphSerializer.cellToJson(change.cell);
-        const rtCell = this._rtCells.set(change.cell.id, cellJson);
-        CellAdapter.bind(change.cell, rtCell, this._mxGraph);
-      }
-
       change.cell.__convergenceAdapter.processChange(change);
     }
   }
 
   processLocalChildChange(change) {
-    //console.log("cell child changed", change);
-    if (change.parent === null) {
-      const cellId = change.child.getId();
-      this._rtCells.remove(cellId);
-    }
+    console.log("cell child changed", change);
   }
 }
 
@@ -92,11 +103,11 @@ class CellAdapter {
       this.localTerminalChanged(change);
 
     } else if (change instanceof mxGeometryChange) {
-      this.localGeometryChanged(change.geometry)
+      this.localGeometryChanged(change)
     } else if (change instanceof mxStyleChange) {
       this.localStyleChanged(change);
     } else if (change instanceof mxValueChange) {
-      console.log("cell value changed", change);
+      this.localValueChanged(change)
     } else if (change instanceof mxCollapseChange) {
       console.log("cell collapsed changed", change);
     } else if (change instanceof mxVisibleChange) {
@@ -104,9 +115,15 @@ class CellAdapter {
     }
   }
 
-  localGeometryChanged(geometry) {
+  localGeometryChanged(change) {
+    const {geometry} = change;
     const geometryJson = MxGraphSerializer.geometryToJson(geometry);
     this._rtGeometry.value(geometryJson);
+  }
+
+  localValueChanged(change) {
+    const {value} = change;
+    this._rtCell.set("value", value);
   }
 
   localTerminalChanged(change) {
@@ -195,7 +212,7 @@ class CellAdapter {
           break;
         case "source":
           const sourceId = e.value.value();
-          const source = targetId === null ? null : this._mxGraph.model.cells[sourceId];
+          const source = sourceId === null ? null : this._mxGraph.model.cells[sourceId];
           this._mxCell.setTerminal(source, true);
           this._mxGraph.view.refresh();
           break;
@@ -203,6 +220,11 @@ class CellAdapter {
           this.initStyle();
           const newStyle = MxGraphSerializer.jsonToStyle(this._rtStyle.value());
           this._mxCell.setStyle(newStyle);
+          break;
+        case "value":
+          const value = e.value.value();
+          this._mxCell.setValue(value);
+          this._mxGraph.view.refresh();
           break;
       }
     });
@@ -230,11 +252,10 @@ class CellAdapter {
         const currentStyle = MxGraphSerializer.styleToJson(this._mxCell.style);
         currentStyle.styles[styleName] = value;
         const newStyle = MxGraphSerializer.jsonToStyle(currentStyle);
-
-        this._mxGraph.model.beginUpdate();
         this._mxCell.setStyle(newStyle);
-        this._mxGraph.model.endUpdate();
+        this._mxGraph.view.removeState(this._mxCell);
         this._mxGraph.view.refresh();
+
       });
 
       this._rtStyles.on("remove", e => {
@@ -243,7 +264,10 @@ class CellAdapter {
         delete currentStyle.styles[styleName];
         const newStyle = MxGraphSerializer.jsonToStyle(currentStyle);
         this._mxCell.setStyle(newStyle);
+        const old = mxGraphView.prototype.updateStyle;
+        mxGraphView.prototype.updateStyle = true;
         this._mxGraph.view.refresh();
+        mxGraphView.prototype.updateStyle = old;
       });
 
 
@@ -254,6 +278,7 @@ class CellAdapter {
         currentStyle.classes.push(className);
         const newStyle = MxGraphSerializer.jsonToStyle(currentStyle);
         this._mxCell.setStyle(newStyle);
+        this._mxGraph.view.removeState(this._mxCell);
         this._mxGraph.view.refresh();
       });
 
@@ -264,6 +289,7 @@ class CellAdapter {
         currentStyle.classes.splice(index, 1);
         const newStyle = MxGraphSerializer.jsonToStyle(currentStyle);
         this._mxCell.setStyle(newStyle);
+        this._mxGraph.view.removeState(this._mxCell);
         this._mxGraph.view.refresh();
       });
     }
