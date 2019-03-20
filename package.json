@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "mxgraph": "^3.9.11",
-    "@convergence/convergence": "1.0.0-beta.9"
+    "@convergence/convergence": "1.0.0-beta.9",
+    "@convergence/color-assigner": "0.3.0"
   }
 }

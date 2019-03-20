@@ -100,15 +100,23 @@ class MxGraphActivityBinder {
       remotePointer.setAttributeNS(null, "transform", `translate(${pointer.x},${pointer.y})`);
       this._remotePointers[participant.sessionId] = remotePointer;
       this._svg.appendChild(remotePointer);
+
+      const selection = participant.state.get("selection") || [];
+      this._updateRemoteSelection(participant.sessionId, selection);
     }
   }
 
   _cellUpdated(cell) {
+    const handler = this._mxGraph.selectionCellsHandler.handlers.get(cell);
+    if(handler) {
+      handler.reset();
+      handler.redraw();
+    }
     Object.keys(this._remoteSelectionsBySessionId).forEach(sessionId => {
       const remoteSelection = this._remoteSelectionsBySessionId[sessionId];
       const cellSelection = remoteSelection.cells[cell.id];
       if (cellSelection) {
-        this._updateBoundsForRect(cell, cellSelection);
+        this._updateBoundsForShape(cell, cellSelection);
       }
     });
   }
@@ -127,6 +135,10 @@ class MxGraphActivityBinder {
   _updateRemoteSelection(sessionId, cellIds) {
     const currentSelection = this._remoteSelectionsBySessionId[sessionId];
     if (currentSelection) {
+      Object.keys(currentSelection.cells).forEach(cellId => {
+        const shape = currentSelection.cells[cellId];
+        shape.destroy();
+      })
       currentSelection.group.parentElement.removeChild(currentSelection.group);
       delete this._remoteSelectionsBySessionId[sessionId];
     }
@@ -136,41 +148,71 @@ class MxGraphActivityBinder {
         cells: {}
       };
       const selectionGroup = document.createElementNS(svgNS, "g");
+      this._svg.appendChild(selectionGroup);
+      // this._mxGraph.view.getDrawPane().appendChild(selectionGroup);
       cellIds.forEach(cellId => {
         const cell = this._mxGraph.model.getCell(cellId);
         if (cell !== null) {
-          const cellRect = this._createSelectionRect(cell);
-          selectionGroup.appendChild(cellRect);
-          selection.cells[cellId] = cellRect;
+          const shape = this._createSelectionShape(cell, selectionGroup);
+          // selectionGroup.appendChild(cellRect);
+          selection.cells[cellId] = shape;
         }
       });
 
       selection.group = selectionGroup;
-
       this._remoteSelectionsBySessionId[sessionId] = selection;
-      this._svg.appendChild(selectionGroup);
     }
   }
 
-  _createSelectionRect(cell) {
-    const selection = document.createElementNS(svgNS, "rect");
-    selection.setAttributeNS(null, "fill", "none");
-    selection.setAttributeNS(null, "stroke", "#ff1712");
-    selection.setAttributeNS(null, "stroke-dasharray", "3 3");
-    selection.setAttributeNS(null, "pointer-events", "3 3");
+  _createSelectionShape(cell, g) {
+    let shape;
+    const cellState = this._mxGraph.getView().getState(cell);
 
-    this._updateBoundsForRect(cell, selection);
+    const highlighter = new mxCellHighlight(this._mxGraph, '#ff0000', 2);
+    highlighter.highlight(cellState);
 
-    return selection;
+    // if (cell.edge) {
+    //   shape = new mxPolyline(cellState.absolutePoints, "red", 1);
+    // } else {
+    //   const bounds = this._mxGraph.getBoundingBox([cell]);
+    //   shape = new mxRectangleShape(bounds, "none", "red", 1);
+    // }
+    // shape.style = {...cellState.style};
+    // shape.init(g);
+    // this._updateBoundsForShape(cell, shape);
+
+    return highlighter;
   }
 
-  _updateBoundsForRect(cell, selection) {
-    const bounds = this._mxGraph.getBoundingBox([cell]);
-    const {x, y, height, width} = bounds;
-
-    selection.setAttributeNS(null, "x", `${x - (padding / 2)}`);
-    selection.setAttributeNS(null, "y", `${y - (padding / 2)}`);
-    selection.setAttributeNS(null, "height", `${height + padding}`);
-    selection.setAttributeNS(null, "width", `${width + padding}`);
+  _updateBoundsForShape(cell, shape) {
+    shape.repaint();
+    // const cellState = this._mxGraph.getView().getState(cell);
+    //
+    // shape.apply(cellState);
+    // shape.fill = "none";
+    // shape.stroke = "red";
+    //
+    // if (cell.edge) {
+    //   shape.points = cellState.absolutePoints;
+    //
+    // } else {
+    //
+    //   const bounds = this._mxGraph.view.getBoundingBox(cellState, true);
+    //   const {x, y, height, width} = bounds;
+    //   shape.bounds = new mxRectangle(
+    //     x - (padding / 2),
+    //     y - (padding / 2),
+    //     width + padding,
+    //     height + padding
+    //   );
+    // }
+    //
+    //
+    // shape.redraw();
+    //
+    // shape.node.setAttributeNS(null, "pointer-events", "none");
+    // for (let i = 0; i < shape.node.children.length; i++) {
+    //   shape.node.children[i].setAttributeNS(null, "pointer-events", "none");
+    // }
   }
 }

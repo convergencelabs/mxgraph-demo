@@ -256,7 +256,9 @@ class CellAdapter {
         const mxGeometry = MxGraphSerializer.jsonToGeometry(this._rtGeometry.value());
         this._mxCell.setGeometry(mxGeometry);
         this._mxGraph.view.refresh();
-        this._fireEvent("onCellGeometryChanged", {cell: this._mxCell});
+        setTimeout(() => {
+          this._fireEvent("onCellGeometryChanged", {cell: this._mxCell});
+        }, 0);
       });
     }
   }
