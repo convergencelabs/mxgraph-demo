@@ -1,9 +1,10 @@
 
 
 class MxGraphCollaborativeSelectionManager {
-  constructor(mxGraph, activity, modelAdapter) {
+  constructor(mxGraph, activity, colorManager, modelAdapter) {
     this._mxGraph = mxGraph;
     this._activity = activity;
+    this._colorManager = colorManager;
 
     modelAdapter.addListener({
       onCellsRemoved: (evt) => {
@@ -12,24 +13,12 @@ class MxGraphCollaborativeSelectionManager {
         });
       },
       onCellGeometryChanged: (evt) => this._cellUpdated(evt.cell),
-      onCellStyleChanged: (evt) => this._cellUpdated(evt.cell)
-    });
-
-    this._mxGraph.model.addListener(mxEvent.CHANGE, (sender, evt) => {
-      const edit = evt.getProperty('edit');
-      if (!edit.ignoreEdit) {
-        edit.changes.forEach(change => {
-          if (change instanceof mxGeometryChange) {
-            this._cellUpdated(change.cell);
-          } else if (change instanceof mxStyleChange) {
-            this._cellUpdated(change.cell);
-          }
-        });
-      }
+      onCellStyleChanged: (evt) => this._cellUpdated(evt.cell),
+      onCellTerminalChanged: (evt) => this._cellUpdated(evt.cell)
     });
 
     this._remoteSelectionsBySessionId = {};
-    this._selectionHandler = this._mxGraph.createSelectionCellsHandler();
+    this._selectionHandler = this._mxGraph.selectionCellsHandler;
     this._selectionHandler.addListener(mxEvent.ADD, e => {
       this._setSelection();
     });
@@ -74,23 +63,15 @@ class MxGraphCollaborativeSelectionManager {
   _cellUpdated(cell) {
     const handler = this._mxGraph.selectionCellsHandler.getHandler(cell);
     if (handler) {
-      // const cellState = this._mxGraph.getView().getState(cell);
-      // handler.state = cellState;
-      // handler.refresh();
-      // handler.reset();
-
-      // setTimeout(() => {
-      //   handler.redraw();
-      //   this._mxGraph.view.refresh();
-      // }, 0);
+      handler.redraw();
     }
     Object.keys(this._remoteSelectionsBySessionId).forEach(sessionId => {
       const remoteSelection = this._remoteSelectionsBySessionId[sessionId];
       const highlighter = remoteSelection.cells[cell.id];
       if (highlighter) {
         const cellState = this._mxGraph.getView().getState(cell);
-        highlighter.state = cellState;
-        highlighter.repaint();
+        highlighter.highlight(null);
+        highlighter.highlight(cellState);
       }
     });
   }
@@ -124,7 +105,8 @@ class MxGraphCollaborativeSelectionManager {
       cellIds.forEach(cellId => {
         const cell = this._mxGraph.model.getCell(cellId);
         if (cell !== null) {
-          const highlighter = new mxCellHighlight(this._mxGraph, '#ff0000', 2);
+          const color = this._colorManager.color(sessionId);
+          const highlighter = new mxCellHighlight(this._mxGraph, color, 3, false);
           const cellState = this._mxGraph.getView().getState(cell);
           highlighter.highlight(cellState);
           selection.cells[cellId] = highlighter;

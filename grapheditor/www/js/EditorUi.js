@@ -974,6 +974,11 @@ EditorUi.prototype.toolbarHeight = 34;
 /**
  * Specifies the height of the footer. Default is 28.
  */
+EditorUi.prototype.presenceHeight = 200;
+
+/**
+ * Specifies the height of the footer. Default is 28.
+ */
 EditorUi.prototype.footerHeight = 28;
 
 /**
@@ -2922,9 +2927,13 @@ EditorUi.prototype.refresh = function(sizeDidChange)
 	var fw = (this.format != null) ? this.formatWidth : 0;
 	this.sidebarContainer.style.top = tmp + 'px';
 	this.sidebarContainer.style.width = effHsplitPosition + 'px';
-	this.formatContainer.style.top = tmp + 'px';
+	this.formatContainer.style.top = tmp + this.presenceHeight + 'px';
 	this.formatContainer.style.width = fw + 'px';
 	this.formatContainer.style.display = (this.format != null) ? '' : 'none';
+
+  this.presenceContainer.style.top = tmp + 'px';
+  this.presenceContainer.style.width = fw + 'px';
+  this.presenceContainer.style.height = this.presenceHeight + 'px';
 	
 	this.diagramContainer.style.left = (this.hsplit.parentNode != null) ? (effHsplitPosition + this.splitSize) + 'px' : '0px';
 	this.diagramContainer.style.top = this.sidebarContainer.style.top;
@@ -3004,6 +3013,8 @@ EditorUi.prototype.createDivs = function()
 	this.toolbarContainer = this.createDiv('geToolbarContainer');
 	this.sidebarContainer = this.createDiv('geSidebarContainer');
 	this.formatContainer = this.createDiv('geSidebarContainer geFormatContainer');
+  this.presenceContainer = this.createDiv('gePresenceContainer');
+  this.presenceContainer.id = "presence";
 	this.diagramContainer = this.createDiv('geDiagramContainer');
 	this.footerContainer = this.createDiv('geFooterContainer');
 	this.hsplit = this.createDiv('geHsplit');
@@ -3087,15 +3098,20 @@ EditorUi.prototype.createUi = function()
 	{
 		this.container.appendChild(this.sidebarContainer);
 	}
-	
-	// Creates the format sidebar
+
+  // Creates the format sidebar
+  this.container.appendChild(this.presenceContainer);
+
+
+  // Creates the format sidebar
 	this.format = (this.editor.chromeless || !this.formatEnabled) ? null : this.createFormat(this.formatContainer);
 	
 	if (this.format != null)
 	{
 		this.container.appendChild(this.formatContainer);
 	}
-	
+
+
 	// Creates the footer
 	var footer = (this.editor.chromeless) ? null : this.createFooter();
 	

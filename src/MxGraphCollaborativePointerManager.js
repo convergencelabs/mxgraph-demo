@@ -1,14 +1,14 @@
 
-
 class MxGraphCollaborativePointerManager {
 
   static SVG_NS = "http://www.w3.org/2000/svg";
   static CURSOR_PATH = "M 0,0 L 0,0 11.6,11.6 6.7,11.6 9.6,18.3 6.0,20.2 3.1,13.3 0,16z";
   static POINTER_KEY = "pointer";
 
-  constructor(mxGraph, activity) {
+  constructor(mxGraph, activity, colorManager) {
     this._mxGraph = mxGraph;
     this._activity = activity;
+    this._colorManager = colorManager;
     this._remotePointers = {};
     this._root = this._mxGraph.getView().getOverlayPane();
 
@@ -92,6 +92,9 @@ class MxGraphCollaborativePointerManager {
       const remotePointer = document.createElementNS(MxGraphCollaborativePointerManager.SVG_NS, "path");
       remotePointer.setAttributeNS(null, "d", MxGraphCollaborativePointerManager.CURSOR_PATH);
       remotePointer.setAttributeNS(null, "transform", `translate(${pointer.x},${pointer.y})`);
+      const color =this._colorManager.color(participant.sessionId)
+      remotePointer.setAttributeNS(null, "fill", color);
+      remotePointer.setAttributeNS(null, "stroke", color);
       this._remotePointers[participant.sessionId] = remotePointer;
       this._root.appendChild(remotePointer);
     }

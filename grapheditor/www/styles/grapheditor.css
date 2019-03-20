@@ -19,10 +19,13 @@
 	color:#000000;
 	text-decoration:none;
 }
-.geMenubarContainer, .geToolbarContainer, .geDiagramContainer, .geSidebarContainer, .geFooterContainer, .geHsplit, .geVsplit {
+.geMenubarContainer, .geToolbarContainer, .geDiagramContainer, .geSidebarContainer, .geFooterContainer, .gePresenceContainer, .geHsplit, .geVsplit {
 	overflow:hidden;
 	position:absolute;
 	cursor:default;
+}
+.gePresenceContainer {
+	right: 0px;
 }
 .geFormatContainer {
 	background-color: whiteSmoke !important;
