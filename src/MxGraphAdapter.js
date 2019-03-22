@@ -1,5 +1,16 @@
 class MxGraphAdapter {
 
+  static _CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  static _ID_LENGTH = 32;
+
+  static _generateId() {
+    let text = "";
+    for (let i = 0; i < MxGraphAdapter._ID_LENGTH; i++) {
+      text += MxGraphAdapter._CHARS.charAt(Math.floor(Math.random() * MxGraphAdapter._CHARS.length));
+    }
+    return text;
+  }
+
   constructor(mxGraph, rtGraph) {
     this._mxGraph = mxGraph;
     this._rtCells = rtGraph.get("cells");
@@ -41,6 +52,10 @@ class MxGraphAdapter {
     const cells = properties.cells;
 
     cells.forEach(cell => {
+      const id = MxGraphAdapter._generateId();
+      this._mxGraph.model[id] = cell;
+      cell.id = id;
+
       const cellJson = MxGraphModelSerializer.cellToJson(cell);
       const rtCell = this._rtCells.set(cell.id, cellJson);
       this._bindMxCellAdapter(cell, rtCell);

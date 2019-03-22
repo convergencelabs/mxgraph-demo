@@ -23,17 +23,21 @@ class ConvergenceEditorController {
   constructor(domain, modelId) {
     this._domain = domain;
     this._modelId = modelId;
+    this._room = null;
+    this._activity = null;
+    this._activityColorManager = null;
   }
 
   init() {
     return Promise
-      .all([this._openModel(), this._joinActivity(), this._joinChat])
+      .all([this._openModel(), this._joinActivity(), this._joinChat()])
       .then(() => {
-
         const mxModel = MxGraphModelDeserializer.jsonToMxGraphModel(this._model.root().value());
-
         const editor = new Editor(urlParams['chrome'] === '0', {}, mxModel);
         const ui = new EditorUi(editor);
+        ui.handleError = (e) => {
+          console.log(e);
+        };
 
         setTimeout(() => editor.graph.view.refresh(), 0);
 
@@ -46,6 +50,17 @@ class ConvergenceEditorController {
           colorManager: this._activityColorManager
         });
         document.getElementById("presence").appendChild(this._presenceList.getElement());
+
+        this._chatControl = new ChatControl({
+          room: this._room,
+          username: this._domain.session().user().displayName,
+          sessionId: this._domain.session().sessionId(),
+          colorManager: this._activityColorManager
+        });
+
+        this._domain.chat().events().subscribe(e => console.log(e));
+
+        document.body.appendChild(this._chatControl.getElement());
       });
   }
 
@@ -66,7 +81,7 @@ class ConvergenceEditorController {
   _joinActivity() {
     return this._domain
       .activities()
-      .join("mxgraph.project.:" + this._modelId)
+      .join("mxgraph.project." + this._modelId)
       .then((activity) => {
         this._activity = activity;
         this._activityColorManager = new ActivityColorManager(activity);
@@ -74,14 +89,14 @@ class ConvergenceEditorController {
   }
 
   _joinChat() {
-    const id = "mxgraph.project.:" + this._modelId;
+    const id = "mxgraph.project." + this._modelId;
     return this._domain.chat()
       .create({id, type: "room", membership: "public", ignoreExistsError: true})
       .then((chatId) => {
         return this._domain.chat().join(chatId);
       })
-      .then(function (room) {
-        this._room = room
+      .then((room) => {
+        this._room = room;
       });
   }
 }

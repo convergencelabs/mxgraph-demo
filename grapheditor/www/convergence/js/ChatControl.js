@@ -1,7 +1,9 @@
 class ChatControl extends UiComponent {
 
-  constructor() {
+  constructor(options) {
     super("div", "chat-control", "chat");
+    this._options = options;
+    this._init();
   }
 
   _init() {
@@ -24,7 +26,7 @@ class ChatControl extends UiComponent {
       username: this._options.username,
       sessionId: this._options.sessionId,
       colorManager: this._options.colorManager,
-      onClose: this.toggle.bind(this)
+      onClose: () => this._toggle()
     });
 
     this._el.append(this._chatWindow._el);
@@ -59,14 +61,13 @@ class ChatWindow extends UiComponent {
     super("div", "chat-window");
     this._visible = false;
     this._options = options;
+    this._init();
   }
 
   _init() {
-    this.setVisible(false);
-
     const title = $("<div>", {class: "chat-window-title"}).text("Chat Messages");
     const close = $("<i>", {class: "chat-window-close fa fa-times"});
-    close.click(this._onClose);
+    close.on("click", () => this._options.onClose());
     title.append(close);
     this._el.append(title);
 
@@ -82,6 +83,8 @@ class ChatWindow extends UiComponent {
       chatWindow: this
     });
     this._el.append(this._messageInput._el);
+
+    this.setVisible(false);
   }
 
   toggle() {
@@ -93,8 +96,8 @@ class ChatWindow extends UiComponent {
     this._el.css("visibility", visible ? "visible" : "hidden");
   }
 
-  sendMessage(message) {
-    this._options.room.send(message);
+  _sendMessage(message) {
+    this._options.room.send(message).catch(e => console.log(e));
     this._messagePane._appendLocalMessage(message);
   }
 }
@@ -105,6 +108,7 @@ class ChatMessagePane extends UiComponent {
     super("div", "chat-messages");
 
     this._options = options;
+    this._init();
   }
 
   _init() {
@@ -140,7 +144,7 @@ class ChatMessagePane extends UiComponent {
       message: message,
       timestamp: new Date().getTime(),
       username: displayName,
-      color: self.options.color
+      color: this._options.color
     });
     this._append(msg);
   }
@@ -152,8 +156,11 @@ class ChatMessagePane extends UiComponent {
 }
 
 class ChatMessage extends UiComponent {
-  constructor() {
+  constructor(options) {
     super("div", "chat-message");
+    this._options = options;
+
+    this._init();
   }
 
   _init() {
@@ -170,16 +177,19 @@ class ChatMessage extends UiComponent {
 }
 
 class ChatMessageInput extends UiComponent {
-  constructor() {
+  constructor(options) {
     super("input", "chat-input");
+    this._options = options;
+    this._init();
   }
 
   _init() {
     this._el.attr("placeholder", "Type a message...");
-    this._el.keypress((e) => {
-      if (e.which === 13) {
+    this._el.on("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
         this._sendMessage(this._el.val());
-
         this._el.val("");
         return false;
       }
@@ -187,6 +197,6 @@ class ChatMessageInput extends UiComponent {
   }
 
   _sendMessage(message) {
-    this._options._chatWindow.sendMessage(message);
+    this._options.chatWindow._sendMessage(message);
   }
 }

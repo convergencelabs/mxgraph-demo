@@ -13,7 +13,12 @@ class MxGraphModelDeserializer {
     const deferredCellsByParent = {};
 
     const rootCell = MxGraphModelDeserializer.jsonToMxCell(json.root, rootJson, undefined);
-    const model = new mxGraphModel(rootCell);
+
+    const model = new mxGraphModel();
+    model.createIds = false;
+
+    model.setRoot(rootCell);
+
     Object.keys(cells).forEach(cellId => {
 
       const cellJson = cells[cellId];
