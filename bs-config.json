@@ -1,0 +1,11 @@
+{
+  "port": 8000,
+  "files": ["./src/**/*"],
+  "server": {
+    "baseDir": "./src",
+    "routes": {
+      "/libs": "node_modules",
+      "/mxgraph.config.js": "mxgraph.config.js"
+    }
+  }
+}

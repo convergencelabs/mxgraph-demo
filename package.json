@@ -1,21 +1,40 @@
 {
-  "name": "convergence-mxgraph-bindings",
-  "version": "1.0.0",
-  "description": "desc",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "name": "@convergencelabs/convergence-mxgraph-demo",
+  "version": "0.1.0",
+  "description": "A mock up of a diagram editor built using mxGraph and Convergence",
+  "keywords": [
+    "realtime",
+    "collaboration",
+    "mxGraph",
+    "convergence"
+  ],
+  "author": {
+    "name": "Convergence Labs, Inc",
+    "email": "info@convergencelabs.com",
+    "url": "https://convergencelabs.com"
   },
-  "author": "",
-  "license": "ISC",
+  "contributors": [],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/convergencelabs/mxgraph-demo.git"
+  },
+  "bugs": {
+    "url": "https://github.com/convergencelabs/mxgraph-demo/issues"
+  },
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "lite-server"
+  },
   "dependencies": {
     "@convergence/color-assigner": "0.3.0",
-    "@convergence/convergence": "1.0.0-beta.9",
+    "@convergence/convergence": "^1.0.0-rc.1",
+    "@fortawesome/fontawesome-free": "^5.8.0",
+    "fs-extra": "^7.0.1",
     "jquery": "3.3.1",
+    "lite-server": "^2.4.0",
     "moment": "^2.24.0",
-    "mxgraph": "^3.9.11"
-  },
-  "devDependencies": {
-    "@fortawesome/fontawesome-free": "^5.8.0"
+    "mxgraph": "^3.9.11",
+    "toastr": "^2.1.4"
   }
 }

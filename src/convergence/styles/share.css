@@ -1,0 +1,11 @@
+.share-controls {
+    display: inline-block;
+    float: right;
+    margin-right: 10px;
+}
+
+.share-controls i {
+    font-size: 16px;
+    margin-top: 4px;
+    margin-left: 2px;
+}

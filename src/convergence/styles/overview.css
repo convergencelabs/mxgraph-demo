@@ -1,0 +1,18 @@
+.collab-overview-container {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+}
+
+.overview-title {
+  font-size: 12px;
+  padding: 8px;
+  color: #707070;
+  font-weight: bold;
+  text-align: center;
+  border-bottom: 1px solid #c0c0c0;
+}
+
+.mx-overview {
+  flex: 1;
+}

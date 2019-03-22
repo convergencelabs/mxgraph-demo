@@ -1,0 +1,43 @@
+.session-list {
+    padding: 3px 3px 3px 10px;
+
+}
+
+.presence-pane {
+    font-family: Helvetica Neue,Helvetica,Arial Unicode MS,Arial;
+    border-top: 1px solid #c0c0c0;
+    border-bottom: 1px solid #c0c0c0;
+    background: #f5f5f5;
+    font-size: 14px;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    overflow: auto;
+}
+
+.presence-pane .presence-title {
+    font-size: 12px;
+    padding: 8px;
+    color: #707070;
+    font-weight: bold;
+    text-align: center;
+    border-bottom: 1px solid #c0c0c0;
+}
+
+.session-presence {
+    padding: 5px 0;
+    border-bottom: 1px solid lightgray;
+}
+
+.session-color {
+    height: 10px;
+    width: 10px;
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.session-name {
+    display: inline-block;
+}
