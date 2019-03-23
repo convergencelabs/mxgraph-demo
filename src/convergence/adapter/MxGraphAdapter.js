@@ -53,7 +53,7 @@ class MxGraphAdapter {
 
     cells.forEach(cell => {
       const id = MxGraphAdapter._generateId();
-      this._mxGraph.model[id] = cell;
+      this._mxGraph.model.cells[id] = cell;
       cell.id = id;
 
       const cellJson = MxGraphModelSerializer.cellToJson(cell);
