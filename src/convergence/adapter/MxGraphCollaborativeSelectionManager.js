@@ -81,7 +81,7 @@ class MxGraphCollaborativeSelectionManager {
       const remoteSelection = this._remoteSelectionsBySessionId[sessionId];
       const cellSelection = remoteSelection.cells[cell.id];
       if (cellSelection) {
-        cellSelection.parentElement.removeChild(cellSelection);
+        cellSelection.destroy();
         delete remoteSelection.cells[cell.id];
       }
     });
