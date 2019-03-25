@@ -74,10 +74,17 @@ class ConvergenceEditorController {
   }
 
   init() {
+    const {
+      MxGraphAdapter,
+      PointerManager,
+      SelectionManager,
+      Deserializer
+    } = ConvergenceMxGraphAdapter;
+
     return Promise
       .all([this._openModel(), this._joinActivity(), this._joinChat()])
       .then(() => {
-        const mxModel = MxGraphModelDeserializer.jsonToMxGraphModel(this._model.root().value());
+        const mxModel = Deserializer.deserializeMxGraphModel(this._model.root().value());
         const editor = new Editor(urlParams['chrome'] === '0', {}, mxModel);
 
         const overviewContainer = document.createElement("div");
@@ -96,8 +103,8 @@ class ConvergenceEditorController {
         setTimeout(() => editor.graph.view.refresh(), 0);
 
         this._modelAdapter = new MxGraphAdapter(editor.graph, this._model.root());
-        this._pointerManager = new MxGraphCollaborativePointerManager(editor.graph, this._activity, this._activityColorManager);
-        this._selectionManager = new MxGraphCollaborativeSelectionManager(editor.graph, this._activity, this._activityColorManager, this._modelAdapter);
+        this._pointerManager = new PointerManager(editor.graph, this._activity, this._activityColorManager);
+        this._selectionManager = new SelectionManager(editor.graph, this._activity, this._activityColorManager, this._modelAdapter);
 
         this._presenceList = new PresenceList({
           activity: this._activity,
@@ -127,13 +134,14 @@ class ConvergenceEditorController {
   }
 
   _openModel() {
+    const {Serializer} = ConvergenceMxGraphAdapter;
     return this._domain
       .models()
       .openAutoCreate({
         id: this._modelId,
         collection: MxGraphConfig.COLLECTION_ID,
         ephemeral: true,
-        data: MxGraphModelSerializer.modelToJson(new mxGraphModel())
+        data: Serializer.serializeMxGraphModel(new mxGraphModel())
       })
       .then(model => {
         this._model = model;
@@ -141,6 +149,7 @@ class ConvergenceEditorController {
   }
 
   _joinActivity() {
+    const {ActivityColorManager} = ConvergenceMxGraphAdapter;
     return this._domain
       .activities()
       .join("mxgraph.project." + this._modelId)
