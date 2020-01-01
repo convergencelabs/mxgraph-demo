@@ -1,5 +1,6 @@
 {
   "port": 4000,
+  "ghostMode": false,
   "files": ["./src/**/*"],
   "server": {
     "baseDir": "./src",
