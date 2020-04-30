@@ -32,7 +32,7 @@
     "@convergence/mxgraph-adapter": "0.1.0",
     "@fortawesome/fontawesome-free": "5.8.0",
     "fs-extra": "7.0.1",
-    "jquery": "3.4.1",
+    "jquery": "3.5.0",
     "lite-server": "2.4.0",
     "moment": "2.24.0",
     "mxgraph": "3.9.11",
