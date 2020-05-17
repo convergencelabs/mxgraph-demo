@@ -98,7 +98,6 @@ class ChatWindow extends UiComponent {
 
   _sendMessage(message) {
     this._options.room.send(message).catch(e => console.log(e));
-    this._messagePane._appendLocalMessage(message);
   }
 }
 
