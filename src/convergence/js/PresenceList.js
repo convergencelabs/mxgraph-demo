@@ -29,7 +29,7 @@ class PresenceList extends UiComponent {
   }
 
   _addSession(participant) {
-    const color = this._options.colorManager.color(participant.sessionId);
+    const color = this._options.colorManager.color(participant.user.username);
     const displayName = participant.user.displayName || participant.user.username;
     const session = new SessionItem({
       local: participant.local,

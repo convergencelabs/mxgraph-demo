@@ -68,7 +68,7 @@ class Overview extends UiComponent {
   }
 
   _addSession(participant) {
-    const color = this._options.colorManager.color(participant.sessionId);
+    const color = this._options.colorManager.color(participant.user.username);
     const viewport = new mxRectangleShape(new mxRectangle(0, 0, 10, 10), "none", color);
     viewport.dialect = this._outline.outline.dialect;
     const container = this._outline.outline.getView().getOverlayPane()

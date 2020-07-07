@@ -73,7 +73,7 @@ class ChatWindow extends UiComponent {
 
     this._messagePane = new ChatMessagePane({
       username: this._options.username,
-      color: this._options.colorManager.color(this._options.sessionId),
+      color: this._options.colorManager.color(this._options.username),
       colorManager: this._options.colorManager,
       room: this._options.room
     });
@@ -120,7 +120,7 @@ class ChatMessagePane extends UiComponent {
           e.message,
           e.user,
           e.timestamp,
-          this._options.colorManager.color(e.sessionId))
+          this._options.colorManager.color(e.user.username))
       });
   }
 
