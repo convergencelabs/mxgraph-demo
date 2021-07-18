@@ -1,6 +1,6 @@
 {
   "name": "@convergencelabs/convergence-mxgraph-demo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A mock up of a diagram editor built using mxGraph and Convergence",
   "keywords": [
     "realtime",
