@@ -17,4 +17,4 @@ The project uses `lite-server` to provide a minimal web server for hosting the e
 * `npm install`
 * Create a configuration file by following the instructions in the `mxgraph.config.example.js` file.
 * `npm start`
-* Open your browser to `http://localhost:8000` 
+* Open your browser to `http://localhost:4000` 
