@@ -150,9 +150,10 @@ class ConvergenceEditorController {
 
   _joinActivity() {
     const {ActivityColorManager} = ConvergenceMxGraphAdapter;
+    const options = {autoCreate:{ephemeral: true, worldPermissions: ["join", "view_state", "set_state"] }};
     return this._domain
       .activities()
-      .join("mxgraph.project." + this._modelId)
+      .join("mxgraph.project", this._modelId, options)
       .then((activity) => {
         this._activity = activity;
         this._activityColorManager = new ActivityColorManager(activity);

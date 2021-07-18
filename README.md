@@ -7,10 +7,10 @@ The project uses `lite-server` to provide a minimal web server for hosting the e
 
 ## Dependencies
 
-* npm >= 6.0
-* node >= 10.0
+* npm >= 7.0
+* node >= 14.0
 * mxGraph >= 3.9
-* convergence >= 1.0.0-rc.1
+* convergence >= 1.0.0-rc.11
 
 ## Running the Demo
 
