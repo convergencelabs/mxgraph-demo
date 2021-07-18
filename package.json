@@ -35,7 +35,7 @@
     "jquery": "3.5.1",
     "lite-server": "2.6.1",
     "moment": "2.29.1",
-    "mxgraph": "3.9.12",
+    "mxgraph": "4.2.2",
     "toastr": "2.1.4"
   }
 }
